@@ -1,3 +1,9 @@
+--COVID 19 DATA EXPLORATION
+
+--Skills Used: Joins, CTE's, Temp Tables, Windows Functions, Aggregate Functions, Creating Views, Converting Data Types
+
+
+
 --Viewing the Two Data Sources ('CovidDeaths' and 'CovidVaccinations')
 Select *
 From PortfolioProject..CovidDeaths
@@ -11,7 +17,7 @@ order by 3,4
 
 --EXPLORING THE DATA
 
---Select Data that we are going to be using
+--Select Data that we are going to be using first (CovidDeaths)
 
 Select Location, date, total_cases, new_cases, total_deaths, population
 From PortfolioProject..CovidDeaths
@@ -19,7 +25,7 @@ Where continent is not null
 order by 1,2
 
 
---Looking at Total Cases vs Total Deaths (for United States)
+--Total Cases vs Total Deaths (for United States)
 
 --Shows the likelihood of death if you contract covid in your country:
 Select Location, date, total_cases, total_deaths, (total_deaths/total_cases)*100 as Death_Percentage
@@ -39,7 +45,7 @@ Where continent is not null
 order by 1,2
 
 
---Looking at Countires with the Highest Infection Rates compared to Population
+--Countries with the Highest Infection Rates compared to Population
 
 Select Location, Population, Max(total_cases) as highest_infection_count, Max((total_cases/population))*100 as percent_population_infected
 From PortfolioProject..CovidDeaths
@@ -49,7 +55,7 @@ Group by Location, Population
 order by percent_population_infected desc
 
 
---Showing Counties with the Highest Death Count per Population
+--Counties with the Highest Death Count per Population
 
 --Casting/converting the 'total_deaths' datatype to an Integer due to an issue with the 'total_deaths' being improperly stored as a 'nvarchar(255)' data type.
 Select Location, Max(cast(total_deaths as int)) as total_death_count
@@ -61,7 +67,7 @@ order by total_death_count desc
 
 
 --LET'S BREAK THINGS DOWN BY CONTINENT
---Showing Continents with the Highest Death Count per Population
+--Continents with the Highest Death Count per Population
 Select continent, Max(cast(total_deaths as int)) as total_death_count
 From PortfolioProject..CovidDeaths
 Where continent is not null
@@ -69,8 +75,8 @@ Group by continent
 order by total_death_count desc
 
 
---Global Covid Numbers by Day
 
+--Global Covid Numbers by Day
 --casting 'new_deaths' as integer because its nvarchar data type is invalid for SUM operator
 Select date, SUM(new_cases) as total_cases, SUM(cast(new_deaths as int)) as total_deaths, SUM(cast(new_deaths as int))/SUM(new_cases)*100 as Death_Percentage
 From PortfolioProject..CovidDeaths
@@ -87,8 +93,8 @@ Where continent is not null
 order by 1,2
 
 
---Looking at Total Population vs Vaccinations
 
+--Looking at Total Population vs Vaccinations
 --Giving the aliases 'dea' and 'vac' for CovidDeaths and CovidVaccinations tables
 Select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations
 , SUM(cast(vac.new_vaccinations as int)) OVER (Partition by dea.location Order by dea.location, dea.date) as rolling_vaccination_count
@@ -104,7 +110,7 @@ order by 2,3
 --So to fix this issue we create a CTE below that holds the 'rolling_vaccination_count' values to allow for the 'rolling_vaccination_count/population*100' calculation to be made.
 
 
--- USE CTE (a temporary table to hold calculations for futher evaluation)
+-- Creating a CTE (a temporary table to hold calculations for futher evaluation)
 
 With PopulationvsVaccination (Continent, Location, Date, Population, New_Vaccinations, Rolling_Vaccinated_Count)
 as
@@ -125,7 +131,7 @@ From PopulationvsVaccination
 --Another way to fix this issue (to hold the 'rolling_vaccination_count' values to allow for the 'rolling_vaccination_count/population*100' calculation to be made) is to Create a TEMP TABLE like below.
 
 
---Creating a TEMP TABLE
+--Creating a Temp Table
 
 DROP Table if exists #PercentPopulationVaccinated
 Create Table #PercentPopulationVaccinated
